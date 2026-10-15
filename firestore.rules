@@ -1,19 +1,54 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    // Получить данные текущего участника воркспейса
+    function getMemberData(workspaceId) {
+      return firestore.get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid)).data;
+    }
+
+    // Проверки ролей
+    function isTopManager(workspaceId) {
+      return isAuthenticated() && getMemberData(workspaceId).role == 'top_manager';
+    }
+
+    function isTeamLead(workspaceId, teamId) {
+      let member = getMemberData(workspaceId);
+      return isAuthenticated() && (member.role == 'top_manager' || (member.role == 'team_lead' && member.teamId == teamId));
+    }
+
+    // Правила для пользователей
     match /users/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Правила для воркспейсов
     match /workspaces/{workspaceId} {
-      allow read, write: if isAuthenticated();
-      match /{document=**} {
-        allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow write: if isTopManager(workspaceId);
+
+      // Участники воркспейса
+      match /members/{userId} {
+        allow read: if isAuthenticated();
+        allow write: if isTopManager(workspaceId) || request.auth.uid == userId;
       }
+    }
+
+    // Правила для команд
+    match /teams/{teamId} {
+      allow read: if isAuthenticated();
+      allow write: if isTopManager(resource.data.workspaceId);
+    }
+
+    // Правила для инициатив / задач (пример привязки к teamId)
+    match /initiatives/{initiativeId} {
+      allow read: if isAuthenticated();
+      // Создавать и редактировать может только Топ-менеджер или Тимлид своей команды
+      allow create, update, delete: if isTeamLead(request.resource.data.workspaceId, request.resource.data.teamId);
     }
   }
 }
