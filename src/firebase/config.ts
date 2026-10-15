@@ -1,16 +1,14 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { initializeFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-
-const isEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+import { getAuth } from 'firebase/auth';
+import { initializeFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: isEmulator ? "demo-api-key" : import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: isEmulator ? "demo-project.firebaseapp.com" : import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: isEmulator ? "demo-project" : import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: isEmulator ? "demo-project.appspot.com" : import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: isEmulator ? "demo-sender" : import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: isEmulator ? "demo-app-id" : import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
@@ -20,8 +18,4 @@ export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
 });
 
-if (isEmulator) {
-  console.log("🔥 Connecting to Firebase Emulators (demo-project) on 127.0.0.1:8090...");
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-  connectFirestoreEmulator(db, '127.0.0.1', 8090);
-}
+console.log("☁️ Connected to real Firebase Cloud Firestore:", firebaseConfig.projectId);
