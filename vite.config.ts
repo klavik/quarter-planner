@@ -3,13 +3,11 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  base: '/quarter-planner/',
   plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
-  server: {
-    port: 3000,
-  }
 });

@@ -9,7 +9,7 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
 
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
-  const [newStatus, setNewStatus] = useState<Initiative['status']>('planned');
+  const [newStatus, setNewStatus] = useState<Initiative['status']>('proposed');
   const [formSubmitted, setFormSubmitted] = useState(false);
 
   const [editingInit, setEditingInit] = useState<Initiative | null>(null);
@@ -34,7 +34,7 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
     setInitiatives(prev => [...prev, { id, ...payload }]);
     setNewName('');
     setNewDesc('');
-    setNewStatus('planned');
+    setNewStatus('proposed');
     setFormSubmitted(false);
   };
 
@@ -49,7 +49,11 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
     };
 
     setInitiatives(prev => prev.map(i => (i.id === editingInit.id ? { ...i, ...payload } : i)));
-    await initiativeService.updateInitiative(workspaceId, period.id, editingInit.id!, payload);
+    if ((initiativeService as any).updateInitiative) {
+      await (initiativeService as any).updateInitiative(workspaceId, period.id, editingInit.id!, payload);
+    } else if ((initiativeService as any).updateInitiativeStatus) {
+      await (initiativeService as any).updateInitiativeStatus(workspaceId, period.id, editingInit.id!, editingInit.status);
+    }
     setEditingInit(null);
   };
 
@@ -72,16 +76,17 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
         return <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[11px] font-medium flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Утверждено</span>;
       case 'approved_no_resources':
         return <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[11px] font-medium flex items-center gap-1"><Clock className="w-3 h-3" /> Без ресурсов</span>;
-      case 'rejected':
-        return <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded text-[11px] font-medium">Отклонено</span>;
+      case 'needs_work':
+        return <span className="bg-orange-50 text-orange-700 px-2 py-0.5 rounded text-[11px] font-medium">На доработке</span>;
+      case 'cancelled':
+        return <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded text-[11px] font-medium">Отменено</span>;
       default:
-        return <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[11px] font-medium">В планах</span>;
+        return <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[11px] font-medium">Предложено</span>;
     }
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-      {/* Форма создания инициативы с валидацией */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 shrink-0">
         <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">Создать новую инициативу</h3>
         <form onSubmit={handleCreate} noValidate className="flex items-start gap-3 flex-wrap">
@@ -112,10 +117,11 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
               onChange={e => setNewStatus(e.target.value as Initiative['status'])}
               className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-xs bg-white text-gray-800"
             >
-              <option value="planned">В планах</option>
+              <option value="proposed">Предложено</option>
               <option value="approved">Утверждено</option>
               <option value="approved_no_resources">Без ресурсов</option>
-              <option value="rejected">Отклонено</option>
+              <option value="needs_work">На доработке</option>
+              <option value="cancelled">Отменено</option>
             </select>
           </div>
 
@@ -138,7 +144,6 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
         </form>
       </div>
 
-      {/* Список инициатив */}
       <div className="flex-1 overflow-y-auto p-6 space-y-3 bg-gray-50/50">
         {initiatives.length === 0 ? (
           <div className="text-center py-16 text-gray-400 text-sm bg-white rounded-lg border border-gray-200">
@@ -186,7 +191,6 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
         )}
       </div>
 
-      {/* Модальное окно редактирования инициативы */}
       {editingInit && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-[480px]">
@@ -222,10 +226,11 @@ export function InitiativesTab(_props?: { workspaceId?: string; period?: Plannin
                   onChange={e => setEditingInit({ ...editingInit, status: e.target.value as Initiative['status'] })}
                   className="w-full rounded border border-gray-300 px-3 py-2 text-sm bg-white"
                 >
-                  <option value="planned">В планах</option>
+                  <option value="proposed">Предложено</option>
                   <option value="approved">Утверждено</option>
                   <option value="approved_no_resources">Без ресурсов</option>
-                  <option value="rejected">Отклонено</option>
+                  <option value="needs_work">На доработке</option>
+                  <option value="cancelled">Отменено</option>
                 </select>
               </div>
 

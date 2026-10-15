@@ -19,6 +19,11 @@ export const initiativeService = {
     await updateDoc(docRef, { status });
   },
 
+  async updateInitiative(workspaceId: string, periodId: string, initiativeId: string, data: Partial<Initiative>): Promise<void> {
+    const docRef = doc(db, 'workspaces', workspaceId, 'periods', periodId, 'initiatives', initiativeId);
+    await updateDoc(docRef, data as any);
+  },
+
   async deleteInitiative(workspaceId: string, periodId: string, initiativeId: string): Promise<void> {
     await deleteDoc(doc(db, `workspaces/${workspaceId}/periods/${periodId}/initiatives/${initiativeId}`));
   }

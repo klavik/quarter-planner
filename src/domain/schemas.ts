@@ -77,6 +77,9 @@ export const TaskSchema = z.object({
   teamId: z.string().min(1),
   status: TaskStatusSchema.default('planned'),
   statusReason: z.string().optional(),
+  description: z.string().optional(),
+  resourceOffsets: z.record(z.string(), z.number()).optional(),
+  roleOrder: z.array(z.string()).optional(),
   estimates: z.record(z.string(), z.number().min(0)).default({}),
   
   // Новые поля для Ганта вместо iterationId
